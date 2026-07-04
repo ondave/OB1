@@ -20,6 +20,8 @@ import urllib.request
 
 MAX_LESSONS = 5
 MAX_REPO_FILES = 3
+MAX_BREADCRUMBS = 3
+BREADCRUMB_DAYS = 14
 TIMEOUT_S = 5
 
 INVARIANTS = """\
@@ -68,8 +70,8 @@ def git_root(cwd: str) -> str | None:
         return None
 
 
-def openbrain_lessons(repo: str) -> str:
-    """Fetch active lessons (repo + global) from the open-brain MCP endpoint."""
+def openbrain_call(tool: str, arguments: dict) -> str:
+    """Call one open-brain MCP tool and return its text result ("" on miss)."""
     cfg_path = os.path.expanduser("~/.claude.json")
     with open(cfg_path) as f:
         server = json.load(f)["mcpServers"]["open-brain"]
@@ -85,10 +87,7 @@ def openbrain_lessons(repo: str) -> str:
             "jsonrpc": "2.0",
             "id": 1,
             "method": "tools/call",
-            "params": {
-                "name": "list_lessons",
-                "arguments": {"repo": repo, "limit": MAX_LESSONS},
-            },
+            "params": {"name": tool, "arguments": arguments},
         }
     ).encode()
     req = urllib.request.Request(url, data=body, headers=headers, method="POST")
@@ -108,9 +107,24 @@ def openbrain_lessons(repo: str) -> str:
         content = (msg.get("result") or {}).get("content") or []
         for c in content:
             if c.get("type") == "text":
-                text = c["text"]
-                return "" if text.startswith("No lessons") else text
+                return c["text"]
     return ""
+
+
+def openbrain_lessons(repo: str) -> str:
+    """Fetch active lessons (repo + global) from the open-brain MCP endpoint."""
+    text = openbrain_call("list_lessons", {"repo": repo, "limit": MAX_LESSONS})
+    return "" if text.startswith("No lessons") else text
+
+
+def openbrain_breadcrumbs() -> str:
+    """Fetch the recent breadcrumb trail (newest thoughts, any type)."""
+    text = openbrain_call(
+        "list_thoughts", {"limit": MAX_BREADCRUMBS, "days": BREADCRUMB_DAYS}
+    )
+    if text.startswith("No thoughts"):
+        return ""
+    return text[:2000]
 
 
 def repo_file_lessons(cwd: str) -> str:
@@ -160,6 +174,18 @@ def main() -> None:
         rf = ""
     if rf:
         sections.append(f"## Repo lessons (.claude/lessons/)\n\n{rf}")
+
+    try:
+        bc = openbrain_breadcrumbs()
+    except Exception:
+        bc = ""
+    if bc:
+        sections.append(
+            "## Recent activity (Open Brain breadcrumbs, last "
+            f"{BREADCRUMB_DAYS} days)\n"
+            "Context from previous sessions — continue from here rather than "
+            "re-deriving it.\n\n" + bc
+        )
 
     out = {
         "hookSpecificOutput": {

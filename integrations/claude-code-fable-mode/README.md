@@ -41,4 +41,4 @@ Restart Claude Code (or `/reload-plugins`). Verify with `claude plugin list` —
 
 ## Consolidation
 
-Lessons rot without pruning. Monthly: `list_lessons` per repo, merge near-duplicates via `store_lesson`, `retire_lessons` the originals (soft — nothing is deleted).
+Lessons rot without pruning. `/consolidate` runs the full pass — lessons merge-and-retire, duplicate-thought pruning, tool-failure-log mining, and a report-only skills audit. Schedule it monthly (see `ops/ob-consolidate.sh` + `ops/ob1.crontab` for the headless cron wrapper) or run it by hand.

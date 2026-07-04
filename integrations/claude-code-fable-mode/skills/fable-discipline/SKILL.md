@@ -46,13 +46,17 @@ Produce these three items **in your response** before touching code:
 ### Debugging: root cause before patch — always in this order
 
 1. **Reproduce**: run the failing thing; paste the actual error.
-2. **Localize**: name the file:line where behavior diverges from intent.
+2. **Search before deriving**: for library/API/tool errors, look the exact
+   message up (WebSearch the quoted error + framework + version; Context7
+   for library APIs) before reasoning from memory — known issues beat
+   first-principles guesses. Skip only for errors in your own fresh code.
+3. **Localize**: name the file:line where behavior diverges from intent.
    Use logs/prints/debugger — not reading alone.
-3. **Explain**: one sentence, "The bug is X because Y." If you cannot write
-   that sentence, you are not done localizing — go back to step 2.
-4. **Only then patch.** The patch must address Y, not the symptom.
+4. **Explain**: one sentence, "The bug is X because Y." If you cannot write
+   that sentence, you are not done localizing — go back to step 3.
+5. **Only then patch.** The patch must address Y, not the symptom.
 
-Symptom-patch smell test — if your fix is one of these, return to step 2:
+Symptom-patch smell test — if your fix is one of these, return to step 3:
 - wrapping the failure in `try/except` / `?.` / a null check
 - adding a special case for the exact failing input
 - retrying, sleeping, or reordering until it passes
