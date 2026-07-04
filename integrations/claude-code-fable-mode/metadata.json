@@ -1,0 +1,20 @@
+{
+  "name": "Claude Code Fable Mode",
+  "description": "A Claude Code plugin that makes a weaker model deliver frontier-model discipline mechanically: Open Brain lessons injected at session start, a verified-done Stop gate, a fresh-eyes reviewer agent, /lesson capture, and a prescriptive execution skill.",
+  "category": "integrations",
+  "author": {
+    "name": "Dave Johnson",
+    "github": "davejohnson-oceanum"
+  },
+  "version": "0.1.0",
+  "requires": {
+    "open_brain": true,
+    "services": [],
+    "tools": ["Claude Code >= 2.1.142", "python3"]
+  },
+  "tags": ["claude-code", "plugin", "hooks", "lessons-learned", "verification"],
+  "difficulty": "intermediate",
+  "estimated_time": "15 minutes",
+  "created": "2026-07-05",
+  "updated": "2026-07-05"
+}

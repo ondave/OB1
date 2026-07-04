@@ -1,0 +1,17 @@
+{
+  "name": "fable-mode",
+  "displayName": "Fable Mode",
+  "version": "0.1.0",
+  "description": "Harness-enforced frontier-model discipline for weaker models: Open Brain lessons injected at session start, a verified-done Stop gate, a fresh-eyes reviewer agent, /lesson capture, and the fable-discipline skill.",
+  "author": {
+    "name": "Dave Johnson"
+  },
+  "license": "FSL-1.1-MIT",
+  "keywords": [
+    "discipline",
+    "lessons-learned",
+    "open-brain",
+    "hooks",
+    "verification"
+  ]
+}

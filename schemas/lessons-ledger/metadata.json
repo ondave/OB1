@@ -1,0 +1,20 @@
+{
+  "name": "Lessons Ledger",
+  "description": "Dedicated lessons-learned store with its own table, semantic search, repo scoping, and soft retirement — kept separate from general thoughts so retrieval and consolidation stay clean.",
+  "category": "schemas",
+  "author": {
+    "name": "Dave Johnson",
+    "github": "davejohnson-oceanum"
+  },
+  "version": "1.0.0",
+  "requires": {
+    "open_brain": true,
+    "services": [],
+    "tools": []
+  },
+  "tags": ["lessons-learned", "memory", "pgvector", "agents"],
+  "difficulty": "beginner",
+  "estimated_time": "10 minutes",
+  "created": "2026-07-05",
+  "updated": "2026-07-05"
+}
