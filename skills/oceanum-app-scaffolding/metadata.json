@@ -1,0 +1,28 @@
+{
+  "name": "Oceanum App Scaffolding",
+  "description": "Project templates the pa-developer subagent uses to scaffold new Oceanum PRAX applications — an EIDOS frontend app and a React+FastAPI full-stack app — with placeholder variables for name, description, namespace, and owner.",
+  "category": "skills",
+  "author": {
+    "name": "Dave Johnson",
+    "github": "davemetocean"
+  },
+  "version": "0.1.0",
+  "requires": {
+    "open_brain": true,
+    "services": ["GitLab", "Oceanum PRAX"],
+    "tools": ["Node.js 18+", "Python 3.10+", "Docker"]
+  },
+  "requires_skills": [],
+  "tags": [
+    "personal-assistant",
+    "scaffolding",
+    "template",
+    "oceanum",
+    "prax",
+    "eidos"
+  ],
+  "difficulty": "intermediate",
+  "estimated_time": "15 minutes",
+  "created": "2026-06-18",
+  "updated": "2026-06-18"
+}

@@ -1,0 +1,10 @@
+{
+  "_comment": "Ready-to-paste MCP server entry for the deployed personal-assistant edge function. After deploying (see README.md), merge the 'personal-assistant' object below into the TOP-LEVEL \"mcpServers\" object of ~/.claude.json — alongside open-brain and project-tracker — and replace REPLACE_WITH_MCP_ACCESS_KEY with the same x-brain-key those two use. Delete this _comment line when pasting (strict JSON has no comments).",
+  "personal-assistant": {
+    "type": "http",
+    "url": "https://coccvdfxaimbwdbirbuq.supabase.co/functions/v1/personal-assistant-mcp",
+    "headers": {
+      "x-brain-key": "REPLACE_WITH_MCP_ACCESS_KEY"
+    }
+  }
+}

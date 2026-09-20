@@ -1,0 +1,21 @@
+{
+  "name": "Project Tracker",
+  "description": "Track active software projects, work items, decisions, references, and next steps — a structured replacement for ad-hoc projects.json scaffolding and per-project memory files.",
+  "category": "recipes",
+  "author": {
+    "name": "Dave Johnson",
+    "github": "davemetocean"
+  },
+  "version": "0.1.0",
+  "requires": {
+    "open_brain": true,
+    "services": [],
+    "tools": ["Supabase CLI"]
+  },
+  "requires_primitives": ["deploy-edge-function", "remote-mcp", "rls"],
+  "tags": ["projects", "productivity", "workflow", "linear", "engineering"],
+  "difficulty": "intermediate",
+  "estimated_time": "30 minutes",
+  "created": "2026-05-18",
+  "updated": "2026-05-18"
+}

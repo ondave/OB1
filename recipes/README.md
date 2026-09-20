@@ -17,6 +17,8 @@ Step-by-step builds that add a new capability to your Open Brain. Follow the ins
 | [NBJ OB1 Agent Memory for OpenClaw](openclaw-agent-memory/) | Canonical recipe for using OB1 Agent Memory as the governed continuity layer for OpenClaw workflows |
 | [OpenClaw Code Review Memory](openclaw-code-review-memory/) | Flagship workflow for compounding repo-specific review lessons, maintainer corrections, and false positives |
 | [OpenClaw TaskFlow Work Log](openclaw-taskflow-work-log/) | Durable handoff recipe for long-running OpenClaw TaskFlows across agents, models, and channels |
+| [Project Tracker](project-tracker/) | Track software projects, work items, decisions, references, and next steps in one structured MCP store — replaces ad-hoc projects.json and per-project memory files |
+| [Personal Assistant](personal-assistant/) | Store identity, contacts, and per-domain assistant preferences in a structured MCP store — replaces profile.json, contacts.json, and per-agent memory.json scaffolding |
 
 Agent Memory recipes should be paired with
 [Safe Agent Memory and Provenance](../docs/safe-agent-memory-provenance.md)

@@ -1,0 +1,10 @@
+# OpenBrain local stack — health-check the two native MCP systemd units and
+# re-apply docker restart policies (every 3 min). Edge runtime retired 2026-07-29.
+*/3 * * * * /home/dave/AIHUB/OB1/ops/ob-watchdog.sh
+# OpenBrain one-way mirror (every 15 min): push local -> cloud (delete-reconcile + upsert).
+# No scheduled pull: capture is local-only, and pulling full rows blew the egress quota (2026-09-11).
+*/15 * * * * /home/dave/AIHUB/OB1/ops/ob-sync.sh push >> /home/dave/AIHUB/OB1/ops/sync.log 2>&1
+# OpenBrain nightly local pg_dump (00:30, before the 01:00 dream), 7-day retention.
+30 0 * * * /home/dave/AIHUB/OB1/ops/ob-backup.sh >> /home/dave/AIHUB/OB1/ops/backup.log 2>&1
+# OpenBrain nightly "dream" (01:00): headless Claude Code (Opus, subscription) merges/prunes Open Brain thoughts + lessons + project-tracker state — prompt in ob-dream.md.
+0 1 * * * /home/dave/AIHUB/OB1/ops/ob-dream.sh >> /home/dave/AIHUB/OB1/ops/dream.log 2>&1

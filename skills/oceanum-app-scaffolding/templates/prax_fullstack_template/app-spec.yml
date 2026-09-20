@@ -1,0 +1,178 @@
+# Application Specification
+# This file defines what the application should do and how it should be built
+# It can be used by Claude Code to implement the application features
+
+metadata:
+  name: {{APP_NAME}}
+  description: {{APP_DESCRIPTION}}
+  version: "0.1.0"
+  author: {{MEMBER_EMAIL}}
+
+architecture:
+  type: fullstack
+  frontend:
+    framework: React
+    language: TypeScript
+    bundler: Vite
+    port: 3000
+  backend:
+    framework: FastAPI
+    language: Python
+    port: 8000
+  deployment:
+    platform: PRAX
+    containerization: Docker
+
+# Define data models
+models:
+  - name: Item
+    description: "Example data model"
+    fields:
+      - name: id
+        type: integer
+        required: true
+        description: "Unique identifier"
+      - name: name
+        type: string
+        required: true
+        description: "Item name"
+      - name: description
+        type: string
+        required: false
+        description: "Optional item description"
+
+# Define API endpoints
+api:
+  baseUrl: /api/v1
+  endpoints:
+    - path: /items
+      method: GET
+      description: "Get all items"
+      response:
+        type: array
+        model: Item
+
+    - path: /items
+      method: POST
+      description: "Create a new item"
+      request:
+        body:
+          name: string (required)
+          description: string (optional)
+      response:
+        type: object
+        model: Item
+
+    - path: /items/{item_id}
+      method: GET
+      description: "Get a specific item by ID"
+      parameters:
+        - name: item_id
+          type: integer
+          in: path
+          required: true
+      response:
+        type: object
+        model: Item
+
+    - path: /items/{item_id}
+      method: DELETE
+      description: "Delete an item by ID"
+      parameters:
+        - name: item_id
+          type: integer
+          in: path
+          required: true
+      response:
+        type: object
+        message: "Item deleted"
+
+# Frontend features and pages
+frontend:
+  pages:
+    - name: Home
+      path: /
+      description: "Main application page with item management"
+      components:
+        - name: ItemList
+          description: "Display all items"
+          features:
+            - "Fetch and display items from API"
+            - "Show empty state when no items exist"
+            - "Delete button for each item"
+
+        - name: ItemForm
+          description: "Form to create new items"
+          features:
+            - "Input field for item name (required)"
+            - "Input field for item description (optional)"
+            - "Submit button to create item"
+            - "Loading state during submission"
+            - "Clear form after successful submission"
+
+  styling:
+    approach: CSS Modules
+    theme:
+      primaryColor: "#646cff"
+      backgroundColor: "#282c34"
+      textColor: "#ffffff"
+
+# Backend features
+backend:
+  features:
+    - name: CORS Support
+      description: "Enable CORS for frontend communication"
+      config:
+        origins:
+          - "http://localhost:3000"
+          - "http://localhost:5173"
+
+    - name: Health Check
+      description: "Health check endpoint for monitoring"
+      endpoint: /health
+
+    - name: In-Memory Storage
+      description: "Simple in-memory storage for items (replace with database in future)"
+
+# Development workflow
+development:
+  setup:
+    - "Install Python dependencies: pip install -r backend/requirements.txt"
+    - "Install Node dependencies: cd frontend && npm install"
+    - "Run backend: cd backend && uvicorn app.main:app --reload"
+    - "Run frontend: cd frontend && npm run dev"
+
+  docker:
+    - "Development: docker-compose -f docker-compose.dev.yml up"
+    - "Production: docker-compose up"
+
+# Testing requirements
+testing:
+  backend:
+    - "Unit tests for API endpoints"
+    - "Test item creation, retrieval, and deletion"
+  frontend:
+    - "Component tests for ItemList and ItemForm"
+    - "Integration tests for API communication"
+
+# Deployment
+deployment:
+  stages:
+    - name: test
+      trigger: "Commits to main branch"
+      description: "Automatic deployment to test environment"
+
+    - name: prod
+      trigger: "Version tags (v*.*.* format)"
+      description: "Automatic deployment to production environment"
+      example: "git tag v1.0.0 && git push origin v1.0.0"
+
+# Future enhancements (optional)
+future:
+  - "Add database persistence (PostgreSQL/MongoDB)"
+  - "Add user authentication"
+  - "Add pagination for item lists"
+  - "Add search and filtering"
+  - "Add item update/edit functionality"
+  - "Add automated tests"
+  - "Add logging and monitoring"

@@ -1,0 +1,4 @@
+.env.sync
+*.log
+.env.mcp
+.backup-*

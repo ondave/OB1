@@ -1,0 +1,73 @@
+name: {{APP_NAME}}
+description: {{APP_DESCRIPTION}}
+userRef: {{USER_REF}}
+memberRef: {{MEMBER_EMAIL}}
+
+resources:
+  sources:
+    - name: {{APP_NAME}}-source
+      userSecretRef: gitlab-rw-oceanum-dev
+      gitlab:
+        username: oceanum-dev
+        project: oceanum/apps/{{USER_REF}}/{{APP_NAME}}
+      defaultBranch: main
+
+  builds:
+    - name: {{APP_NAME}}-backend-build
+      sourceRef:
+        name: {{APP_NAME}}-source
+        branch: main
+      dockerfile: backend/Dockerfile
+      context: backend
+
+    - name: {{APP_NAME}}-frontend-build
+      sourceRef:
+        name: {{APP_NAME}}-source
+        branch: main
+      dockerfile: frontend/Dockerfile
+      context: frontend
+
+  services:
+    - name: {{APP_NAME}}-backend
+      servicePort: 8000
+      image:
+        buildRef: {{APP_NAME}}-backend-build
+      command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+      healthCheck:
+        port: 8000
+        path: /health
+      env:
+        - name: PROJECT_NAME
+          value: "{{APP_NAME}}"
+        - name: PROJECT_DESCRIPTION
+          value: "{{APP_DESCRIPTION}}"
+
+    - name: {{APP_NAME}}-frontend
+      servicePort: 80
+      image:
+        buildRef: {{APP_NAME}}-frontend-build
+      command: nginx -g 'daemon off;'
+      healthCheck:
+        port: 80
+        path: /
+      route:
+        tier: frontend
+        publishApp: true
+        description: {{APP_DESCRIPTION}}
+
+  stages:
+    - name: test
+      track:
+        branch: main
+      resources:
+        services:
+          - {{APP_NAME}}-backend
+          - {{APP_NAME}}-frontend
+
+    - name: prod
+      track:
+        tag: v\\d+.\\d+.\\d+
+      resources:
+        services:
+          - {{APP_NAME}}-backend
+          - {{APP_NAME}}-frontend

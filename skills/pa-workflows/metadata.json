@@ -1,0 +1,27 @@
+{
+  "name": "Personal Assistant Workflows",
+  "description": "Multi-agent playbooks (daily standup, start new feature, weekly planning) that orchestrate the personal-assistant subagents — email, calendar, tasks, research, writing, developer — into end-to-end routines.",
+  "category": "skills",
+  "author": {
+    "name": "Dave Johnson",
+    "github": "davemetocean"
+  },
+  "version": "0.1.0",
+  "requires": {
+    "open_brain": true,
+    "services": ["Asana", "Google Workspace", "GitLab"],
+    "tools": []
+  },
+  "requires_skills": [],
+  "tags": [
+    "personal-assistant",
+    "workflow",
+    "standup",
+    "planning",
+    "orchestration"
+  ],
+  "difficulty": "intermediate",
+  "estimated_time": "10 minutes",
+  "created": "2026-06-18",
+  "updated": "2026-06-18"
+}

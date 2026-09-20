@@ -1,0 +1,125 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2rem;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+h1 {
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.create-section {
+  background-color: #1a1a1a;
+  padding: 2rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+  width: 100%;
+  max-width: 600px;
+}
+
+.create-section input {
+  width: 100%;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: white;
+  font-size: 1rem;
+}
+
+.create-section button {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.items-section {
+  width: 100%;
+  max-width: 600px;
+}
+
+.items-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  background-color: #1a1a1a;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-content {
+  text-align: left;
+  flex: 1;
+}
+
+.item-content strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+
+.item-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #646cff;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+button:hover:not(:disabled) {
+  background-color: #535bf2;
+  border-color: #535bf2;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-btn {
+  background-color: #e74c3c;
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background-color: #c0392b;
+}
+
+.empty-state {
+  color: #888;
+  font-style: italic;
+}
