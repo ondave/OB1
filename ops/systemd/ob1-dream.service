@@ -1,0 +1,16 @@
+[Unit]
+Description=OB1 nightly memory dream (headless Claude Code over Open Brain + project tracker)
+Documentation=file:///home/dave/AIHUB/OB1/ops/README.md
+# On a boot catch-up both timers fire together: back up first, and let the
+# MCP servers start (ob-dream.sh also waits up to 3 min for them to answer).
+After=ob1-backup.service ob1-open-brain-mcp.service ob1-project-tracker-mcp.service
+
+[Service]
+Type=oneshot
+# Run from $HOME so transcripts stay under ~/.claude/projects/-home-dave
+# (the audit trail of what the dream deleted).
+WorkingDirectory=%h
+ExecStart=/home/dave/AIHUB/OB1/ops/ob-dream.sh
+TimeoutStartSec=2h
+StandardOutput=append:/home/dave/AIHUB/OB1/ops/dream.log
+StandardError=append:/home/dave/AIHUB/OB1/ops/dream.log

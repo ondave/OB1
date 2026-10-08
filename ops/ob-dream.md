@@ -1,6 +1,6 @@
 # Nightly Open Brain dream
 
-You are running unattended from cron (`claude -p`). Nobody can answer a
+You are running unattended from a systemd timer (`claude -p`). Nobody can answer a
 question: never call AskUserQuestion and never wait for input. When unsure,
 keep the memory and say so in the report. Finish in one pass. Your final
 message is the report below and nothing else.
@@ -8,7 +8,11 @@ message is the report below and nothing else.
 Scope: the Open Brain `thoughts` and `lessons` tables and the project-tracker
 plugin tables (`projects`, `work_items`, `project_decisions`,
 `project_next_steps`, `project_references`), through the local servers only:
-tools named `mcp__open-brain__*` and `mcp__project-tracker__*`. Ignore the
+tools named `mcp__open-brain__*` and `mcp__project-tracker__*`. For step 4a
+only, you may also READ external status: `mcp__linear-server__get_issue`
+(OCE-*), `mcp__linear-eidosxr__get_issue` (EID-*), `mcp__gitlab__get_merge_request`,
+and `gh pr view` / `gh issue view` through Bash. Never write to Linear, GitHub
+or GitLab. Ignore the
 claude.ai connectors (`mcp__claude_ai_*`) and never call their authenticate
 tools. Do not touch files or git. Do not capture a breadcrumb about this run:
 the report goes to the log, and a nightly capture would crowd the real
@@ -23,6 +27,8 @@ breadcrumbs out of the session-start injection.
   never deleted.
 - At most 10 project-tracker changes (step completions, duplicate-step
   removals and duplicate work items cancelled, counted together).
+- Separately, at most 30 evidence-backed status changes from step 4a, each
+  justified by an external status you read in this run.
 - Nothing created or updated in the last 48 hours is touched: thoughts,
   lessons or tracker rows.
 - Never delete `reference` or `person_note` thoughts. Report suspected
@@ -52,7 +58,9 @@ breadcrumbs out of the session-start injection.
    - Superseded breadcrumb (an older progress note for a project that a
      newer note fully covers): delete the older one.
    - Two thoughts that contradict each other: keep both and report them.
-3. Lessons: `list_lessons` with status active, limit 100. Where two lessons
+3. Lessons: `list_lessons` with status active, limit 500 (a smaller limit
+   silently hides the oldest lessons; if the result still looks capped, say
+   so in the report). Where two lessons
    state the same rule for the same context, `store_lesson` one merged
    version (narrowest correct scope, the newer wording, the same repo tag
    and category as the originals), then `retire_lessons` the originals.
@@ -79,10 +87,39 @@ breadcrumbs out of the session-start injection.
      completed or canceled items.
    - Decisions: report duplicate or contradictory current decisions under
      kept-for-review. Do not log or supersede: `log_decision` supersedes one
-     id per call, so a merge would leave a duplicate current row.
+     id per call, so a merge would leave a duplicate current row. Do not
+     report a pair where a newer decision explicitly settles the point the
+     older one left open and the older one's other content still holds
+     (for example an older "X is deferred" aside next to a newer "we chose
+     X"): that is history, not a contradiction. A decision whose title
+     starts with "Retired:" exists only to supersede an older one (the tool
+     supersedes one id per call); it is not a duplicate of the decision it
+     names, so never report it.
    - Projects and references: report only. A project with no activity for
      90 days gets a proposed status (completed, paused or archived) with the
-     evidence; a stale or duplicated reference gets one line.
+     evidence; a stale or duplicated reference gets one line. A project
+     listed as DEADPATH in the PRECHECK section at the end of this prompt has
+     a repo path that no longer exists on disk: treat that as a strong sign
+     its record is stale and say so in its line.
+4a. External evidence. Most stale tracker rows are stale because the work
+   finished somewhere the tracker cannot see. For work items in todo,
+   backlog, in_progress or in_review (never deferred, completed or
+   canceled), and pending steps that name an issue, PR or MR:
+   - `external_id` OCE-<n>: `mcp__linear-server__get_issue`; EID-<n>:
+     `mcp__linear-eidosxr__get_issue`. Other external_id shapes: skip.
+   - `pr_urls`: github.com URLs with `gh pr view <url> --json state,mergedAt`;
+     gitlab.com MR URLs with `mcp__gitlab__get_merge_request` (project path
+     URL-encoded, the MR iid).
+   - Linear Done, or every listed PR/MR merged: `update_work_item` status
+     completed. Linear Canceled or Duplicate: status canceled. A pending step
+     whose named issue is Done or whose named PR/MR is merged:
+     `complete_next_step`.
+   - `update_work_item` replaces notes, so always send the existing notes
+     followed by a new line: "<source> <id> is <state> (<date>); updated by
+     the dream <today>".
+   - A PR closed unmerged, Linear and PR disagreeing, or a lookup that errors:
+     change nothing and report it. An error is never evidence of anything.
+   - Respect the 48-hour rule and the separate cap of 30.
 5. `thought_stats`: record the totals after.
 
 ## Report (exactly this shape)
@@ -90,9 +127,21 @@ breadcrumbs out of the session-start injection.
 DREAM <date> <MODE>
 thoughts: <before> -> <after> (deleted N, merged M)
 lessons: active <before> -> <after> (retired K, merged J)
-tracker: steps completed A, duplicate steps removed B, work items canceled C
+tracker: steps completed A, duplicate steps removed B, work items canceled C, evidence-backed changes E
 actions:
 - <one line per deletion, merge, retirement or tracker change: ids and a one-clause reason>
 kept-for-review:
 - <suspected duplicates, contradictions, stale steps and items, idle projects you did not touch, and why>
 nothing to do: <the steps that found nothing>
+REVIEW
+<one line per kept-for-review entry: key<TAB>one-line reason>
+END
+
+The REVIEW block is read by a script that compares it with previous nights,
+so keys must be identical every night for the same finding:
+`thought:<id8>`, `lesson:<id8>`, `step:<id8>`, `item:<id8>`,
+`decision:<id8>`, `project:<slug>`, `reference:<slug>/<key>`, and for a
+finding about several rows the kind followed by their id8s sorted and joined
+with `+` (for example `thought:0656248b+3e3b1776`). id8 is the first 8
+characters of the id. Use a literal tab between key and reason. If there is
+nothing to review, write REVIEW and END on consecutive lines.

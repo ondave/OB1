@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.request
 
 MAX_LESSONS = 5
@@ -23,6 +24,14 @@ MAX_REPO_FILES = 3
 MAX_BREADCRUMBS = 3
 BREADCRUMB_DAYS = 14
 TIMEOUT_S = 5
+# Written nightly by AIHUB/OB1/ops/ob-dream-review.py.
+DREAM_DIGEST = os.path.join(
+    os.environ.get("OB_DREAM_STATE")
+    or os.path.expanduser("~/.local/state/openbrain/dream"),
+    "digest.txt",
+)
+DREAM_STALE_DAYS = 3
+DREAM_MAX_LINES = 15
 
 INVARIANTS = """\
 ## Operating invariants (fable-mode)
@@ -126,6 +135,24 @@ def openbrain_breadcrumbs() -> str:
     return text[:2000]
 
 
+def dream_digest() -> str:
+    """The nightly dream's digest, only when it has news or has gone stale."""
+    if not os.path.exists(DREAM_DIGEST):
+        return ""
+    age_days = (time.time() - os.path.getmtime(DREAM_DIGEST)) / 86400
+    if age_days > DREAM_STALE_DAYS:
+        return (
+            f"The last dream digest is {int(age_days)} days old: the nightly "
+            "dream may not be running (check `systemctl --user list-timers "
+            "ob1-dream.timer` and AIHUB/OB1/ops/dream.log)."
+        )
+    with open(DREAM_DIGEST) as f:
+        lines = f.read().strip().splitlines()
+    if len(lines) <= 2 and lines[-1:] == ["Nothing new."]:
+        return ""
+    return "\n".join(lines[:DREAM_MAX_LINES])
+
+
 def repo_file_lessons(cwd: str) -> str:
     root = git_root(cwd)
     if not root:
@@ -173,6 +200,17 @@ def main() -> None:
         rf = ""
     if rf:
         sections.append(f"## Repo lessons (.claude/lessons/)\n\n{rf}")
+
+    try:
+        dd = dream_digest()
+    except Exception:
+        dd = ""
+    if dd:
+        sections.append(
+            "## Open Brain dream (nightly memory consolidation)\n"
+            "Mention these to the user if they bear on the session; secrets "
+            "and stale items need a human decision.\n\n" + dd
+        )
 
     try:
         bc = openbrain_breadcrumbs()

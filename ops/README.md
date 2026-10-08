@@ -58,10 +58,14 @@ ob-sync.py (cron, every 15m)
         local /rest/v1  ──push──>  cloud /rest/v1   (PostgREST, no edge-fn invocations;
                                                      delete cloud rows missing locally,
                                                      then upsert all rows - reads ids only)
-ob-backup.sh (cron, nightly 00:30)
+ob-backup.sh (ob1-backup.timer, nightly 00:30, Persistent)
         local pg_dump -Fc -n public  ──>  ~/.local/share/openbrain/backups (7 days)
-ob-dream.sh (cron, nightly 01:00)
+ob-dream.sh (ob1-dream.timer, nightly 01:00, Persistent)
+        ob-dream-precheck.sh (SQL: secret shapes, dead repo paths)
         claude -p --model opus  ──>  open-brain :54431 + project-tracker :54432   (ob-dream.md)
+                                     + read-only Linear / gh / GitLab status (step 4a)
+        ob-dream-review.py  ──>  ~/.local/state/openbrain/dream/{review.json,digest.txt}
+                                     digest shown by the fable-mode SessionStart hook
 ```
 
 Project-tracker is its own scoped MCP function (idiomatic OpenBrain "recipe",
@@ -74,13 +78,16 @@ matches the cloud topology) sharing the same DB — see `primitives/shared-mcp`.
 | `ob-sync.py`      | Sync engine. Mirrors all 7 tables local -> cloud over PostgREST (delete-reconcile + upsert). |
 | `ob-sync.sh`      | Cron wrapper: sources `.env.sync`, runs `ob-sync.py push`. |
 | `ob-backup.sh`    | Nightly `pg_dump` of the local `public` schema; keeps 7 days. |
-| `ob-dream.sh`     | Nightly headless Claude Code run (Opus): merges duplicate thoughts, retires superseded lessons, tidies project-tracker steps and items, all under hard caps. `--full`, `--dry-run`. |
+| `ob-dream.sh`     | Nightly headless Claude Code run (Opus): merges duplicate thoughts, retires superseded lessons, tidies project-tracker steps and items, closes items Linear/PRs show finished, all under hard caps. `--full`, `--dry-run`, `--force`. |
 | `ob-dream.md`     | The prompt `ob-dream.sh` runs. |
+| `ob-dream-precheck.sh` | Deterministic pre-pass: credential-shaped strings (ids only) and dead `repo_paths`. |
+| `ob-dream-review.py` | Diffs the report's REVIEW block against previous nights; writes the session-start digest. Tests: `uvx pytest ops/tests -q`. |
+| `systemd/`        | `ob1-backup` and `ob1-dream` service + timer units (installed copies live in `~/.config/systemd/user/`). |
 | `run-mcp.sh`      | Launches one MCP function natively under Deno. `run-mcp.sh <fn> <port>`. |
 | `ob-watchdog.sh`  | Health-checks both MCP units; enforces `restart=unless-stopped`. |
 | `.env.sync`       | Local + cloud REST credentials. **gitignored.** |
 | `.env.mcp`        | Runtime env for the native MCP servers. **gitignored, mode 600.** |
-| `ob1.crontab`     | The cron schedule to install (see below). |
+| `ob1.crontab`     | The remaining cron schedule (watchdog, sync) to install (see below). |
 
 Port is set via `DENO_SERVE_ADDRESS` (Deno >= 2.x) rather than a code change, so
 the function sources stay byte-identical to what deploys to the cloud project.
@@ -123,7 +130,7 @@ Capture happens **locally only**, so the cloud is a one-way mirror.
 
 ## Backups
 
-`ob-backup.sh` (cron, nightly 00:30, before the 01:00 dream) writes `pg_dump -Fc -n public` of the local
+`ob-backup.sh` (`ob1-backup.timer`, nightly 00:30, before the 01:00 dream) writes `pg_dump -Fc -n public` of the local
 DB (7 tables + RPCs) to `~/.local/share/openbrain/backups/ob1-*.dump` (dir mode
 700, outside the repo) and prunes dumps older than 7 days. These are the
 point-in-time copies: the cloud mirror propagates deletes, so it is no
@@ -148,7 +155,7 @@ All table data (embeddings included) and the 9 functions still restore
 
 ## Dream (nightly memory consolidation)
 
-`ob-dream.sh` (cron, 01:00) runs `claude -p --model opus` on the Claude
+`ob-dream.sh` (`ob1-dream.timer`, 01:00) runs `claude -p --model opus` on the Claude
 subscription (no API key) with the prompt in `ob-dream.md` against the local
 Open Brain and project-tracker MCPs. Deliberately conservative: merge
 exact/near-duplicate thoughts (keep the most complete or newest), delete
@@ -176,6 +183,48 @@ trail of what it deleted.
 - The fuller monthly pass (`/consolidate`: failure-log mining, skills audit)
   is by hand.
 
+### External evidence, review diff and digest (added 2026-10-08)
+
+Most stale tracker rows were stale because the work finished where the tracker
+cannot see it (a Linear issue marked Done, a merged PR). Step 4a of the prompt
+lets the dream READ that status (`mcp__linear-server__get_issue`,
+`mcp__linear-eidosxr__get_issue`, `mcp__gitlab__get_merge_request`,
+`gh pr view` / `gh issue view`, allowed via `--allowedTools`) and close the
+matching tracker rows, under its own cap of 30 per run. It never writes to
+Linear, GitHub or GitLab, and a failed lookup is never treated as evidence.
+
+Around the model run, `ob-dream.sh` also:
+
+- runs `ob-dream-precheck.sh` first. Plain SQL flags rows holding
+  credential-shaped strings (Linear, GitLab, GitHub, Anthropic, AWS, Slack,
+  Google keys, private keys, URL credentials) by table and id only, never the
+  value, and lists live projects whose `repo_paths` no longer exist. Dead paths
+  are passed to the model as a staleness signal; secrets go only to the digest;
+- waits up to 3 minutes for both MCP servers (a boot catch-up can start the
+  dream before they are up), holds a lock so runs never overlap, and skips a
+  nightly pass if one completed in the last 12 hours (`--force` overrides;
+  that also applies to a manual `--full`). A lock clash exits quietly, so a
+  long manual run straddling 01:00 costs that night's pass;
+- downgrades itself to a dry run when there is no backup newer than 26 hours,
+  because `delete_thought` is permanent and the dump is the only undo. The
+  digest says so, and the next run retries for real;
+- pipes the report through `ob-dream-review.py`, which compares the report's
+  machine-readable `REVIEW` block with previous nights
+  (`~/.local/state/openbrain/dream/review.json`) and logs `NEW`, `AGING`
+  (flagged 14+ nights) and `RESOLVED` lines after the report, so the log shows
+  what changed instead of the same list every night. It writes `digest.txt`
+  in the same directory, and the fable-mode SessionStart hook injects it into
+  new sessions when it has news (new or aging items, secrets, a missing
+  backup, a failed precheck, a missing REVIEW block), or when it is more than
+  3 days old, which means the dream has stopped running. Dead repo paths go
+  through the same diff as `deadpath:<slug>` keys, so they surface once
+  rather than nightly; secrets repeat every night until the row is fixed.
+  A corrupt `review.json` is moved aside and the digest says so.
+  `--dry-run` writes no state.
+
+Reset the review history with `rm ~/.local/state/openbrain/dream/review.json`
+(every item then shows as NEW once).
+
 ## Watchdog / auto-restart
 
 Two independent layers:
@@ -196,7 +245,23 @@ memory pressure and stayed down. That runtime is now retired — see
 
 ## Install the schedule
 
-`crontab` could not be set from the agent session. Install it yourself:
+The nightly backup and dream run from systemd user timers with
+`Persistent=true`: cron skipped every night the laptop was off (13 of the 27
+nights from 2026-09-12 to 2026-10-08), while a persistent timer runs a missed job at next
+boot. Install or refresh them from `ops/systemd/`:
+
+```bash
+cp ops/systemd/ob1-{backup,dream}.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now ob1-backup.timer ob1-dream.timer
+systemctl --user list-timers 'ob1-*'      # verify NEXT / LAST
+```
+
+Remove the old backup and dream lines from the installed crontab at the same
+time (`crontab ob1.crontab` below does that), or both would run.
+
+The rest (watchdog, sync) stays in cron. `crontab` cannot be set from an agent
+session (it is denied in `~/.claude/settings.json`). Install it yourself:
 
 ```bash
 crontab ob1.crontab        # from /home/dave/AIHUB/OB1/ops

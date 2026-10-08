@@ -1,0 +1,9 @@
+[Unit]
+Description=OB1 nightly backup (00:30; runs at next boot if the machine was off)
+
+[Timer]
+OnCalendar=*-*-* 00:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

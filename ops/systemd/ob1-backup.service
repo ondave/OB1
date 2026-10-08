@@ -1,0 +1,12 @@
+[Unit]
+Description=OB1 nightly local pg_dump of the Open Brain DB
+Documentation=file:///home/dave/AIHUB/OB1/ops/README.md
+
+[Service]
+Type=oneshot
+# After a Persistent=true catch-up at boot, Docker may still be starting the DB.
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 30); do docker exec supabase_db_OB1 pg_isready -U postgres -q && exit 0; sleep 10; done; echo "DB not ready after 5 min" >&2; exit 1'
+ExecStart=/home/dave/AIHUB/OB1/ops/ob-backup.sh
+TimeoutStartSec=30min
+StandardOutput=append:/home/dave/AIHUB/OB1/ops/backup.log
+StandardError=append:/home/dave/AIHUB/OB1/ops/backup.log

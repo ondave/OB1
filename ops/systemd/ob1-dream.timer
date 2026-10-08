@@ -1,0 +1,9 @@
+[Unit]
+Description=OB1 nightly memory dream (01:00; runs at next boot if the machine was off)
+
+[Timer]
+OnCalendar=*-*-* 01:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

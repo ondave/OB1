@@ -8,7 +8,7 @@ Markdown disciplines fail on exactly the models that need them — instruction r
 
 | Piece | Mechanism | What it replaces |
 | --- | --- | --- |
-| `hooks/inject_lessons.py` | **SessionStart hook** — injects operating invariants + the current repo's lessons (Open Brain `list_lessons`, repo + global) + `.claude/lessons/*.md` files | Hoping the model remembers to consult its memory |
+| `hooks/inject_lessons.py` | **SessionStart hook** — injects operating invariants + the current repo's lessons (Open Brain `list_lessons`, repo + global) + `.claude/lessons/*.md` files + the nightly dream digest when it has news or has gone stale (`~/.local/state/openbrain/dream/digest.txt`, written by `ops/ob-dream-review.py`) | Hoping the model remembers to consult its memory |
 | `hooks/verified_done.py` | **Stop hook** — blocks ending the turn when code was edited but nothing verified it afterwards | Hoping "done means demonstrated" survives 100k tokens |
 | `agents/fresh-eyes-reviewer.md` | Fresh-context subagent that adversarially re-verifies a "done" claim | Self-review with the same blind spots that wrote the bug |
 | `commands/lesson.md` | `/lesson` — capture atomic context→mistake→rule entries, routed by scope (repo file vs Open Brain) | Session diaries and unroutable notes |
